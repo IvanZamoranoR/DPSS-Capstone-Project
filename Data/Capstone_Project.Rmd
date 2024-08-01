@@ -55,7 +55,7 @@ sensors <-read_csv("sensors.csv")#Sensors
 nodes <- read_csv("nodes.csv")#Nodes
 ```
 
-## Analysis
+## Data Analysis
 
 ```{r_chunk3}
 summary(permits)
