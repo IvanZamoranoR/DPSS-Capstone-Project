@@ -1,0 +1,186 @@
+---
+title: "Capstone_Project"
+output: html_document
+date: "2024-07-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Chicago Array of Things: Climate and the City
+
+First we will take a look at the data provided 
+
+
+## Libraries and setting working directory
+
+```{r Chunk_1}
+install.packages(c("Rcpp", "rgdal", "rgeos", "proj4"))
+
+remove.packages("sf")
+install.packages("sf", dependencies = TRUE)
+install.packages("rnaturalearth")
+install.packages("devtools")
+devtools::install_github("ropensci/rnaturalearthhires")
+# Install necessary packages
+install.packages(c("sf", "ggplot2", "rnaturalearth", "devtools"))
+
+# Load the devtools package
+library(devtools)
+
+# Install rnaturalearthhires from GitHub
+devtools::install_github("ropensci/rnaturalearthhires")
+
+# Load the packages
+library(sf)
+library(ggplot2)
+library(rnaturalearth)
+library(rnaturalearthhires)
+library(tidyverse)
+library(ggplot2)
+folder_path <- "/Users/ivanzamorano/Desktop/DPSS-Capstone-Project/Data"  # use your own path here
+setwd(folder_path) # passing the object into the function
+```
+
+## Reading the files
+
+
+```{r Chunk_2}
+permits <- read_csv("CDPH_Environmental_Permits.csv")
+census <- read_csv("Chicago_Census_2022_acs.csv") 
+green_spaces<- read_csv("Green_Spaces_CDP.csv") #Coordinate
+sensors <-read_csv("sensors.csv")#Sensors
+nodes <- read_csv("nodes.csv")#Nodes
+```
+
+## Analysis
+
+```{r_chunk3}
+summary(permits)
+
+permits$issue_or_entry_date <- as.Date(permits$`ISSUE OR ENTRY DATE`, format="%m/%d/%Y")
+
+# Extract the year from the permit_date
+permits$year <- year(permits$issue_or_entry_date)
+
+
+# Count and group permits by year
+permit_counts <- permits %>%
+  group_by(year) %>%
+  summarise(count = n())
+
+permit_counts
+
+# Plot permit counts with ggplot2
+ggplot(data = permit_counts, aes(x = year, y = count)) +
+  geom_point() +
+  geom_line() +
+  labs(title = "Air Pollution Control Permits by Year",
+       x = "Year",
+       y = "Permit Counts") +
+  theme_minimal()
+
+
+# Create the dataset
+data <- data.frame(
+  Year = 1993:2021,
+  CO = c(
+    204.1, 203.9, 207.9, 222.2, 225.6, 217.1, 226.92, 234.9, 225.13, 227.4, 
+    231.4, 237.8, 244.4, 236.5, 244.0, 242.3, 227.2, 233.3, 232.1, 219.0, 
+    233.6, 236.7, 219.2, 207.4, 206.0, 213.1, 203.5, 170.2, 184.2
+  ),
+  Permits = c(
+    626, 1601, 1786, 1796, 1905, 2240, 1972, 1896, 2039, 1761, 3827, 2629, 
+    2360, 2851, 2244, 2037, 2150, 3506, 4640, 2947, 2269, 2679, 1981, 2579, 
+    2324, 2366, 2218, 1620, 1541
+  )
+)
+
+# Fit the linear regression model
+model <- lm(CO ~ Permits^2, data = data)
+
+model
+
+# Display the summary of the model
+summary(model)
+
+# Plot the data and the regression line
+ggplot(data, aes(x = Permits, y = CO)) +
+  geom_point() +
+  geom_smooth(method = "lm", col = "red") +
+  labs(title = "Linear Regression of CO Levels on Number of Permits",
+       x = "Number of Permits",
+       y = "CO Levels") +
+  theme_minimal()
+
+
+model_summary <- summary(model)
+
+# Extract R-squared value and p-value
+r_squared <- model_summary$r.squared
+p_value <- coef(model_summary)[2, 4]  # p-value for the slope coefficient
+
+# Print the R-squared value and p-value
+cat("R-squared:", r_squared, "\n")
+cat("p-value:", p_value, "\n")
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r_chunk4}
+
+# Select only the LOCATION and APPLICATION TYPE columns
+ permits_selected <- permits %>%
+  filter(`APPLICATION TYPE` == "AIR POLLUTION CONTROL PERMIT") %>%
+  select(LOCATION, `APPLICATION TYPE`)
+
+
+# Coordinates for the locations
+coordinates <- permits_selected$LOCATION
+permits_selected$LOCATION
+
+extract_coords <- function(point_str) {
+  # Remove 'POINT (' and ')'
+  coords_str <- gsub("POINT \\(|\\)", "", point_str)
+  # Split the string into longitude and latitude
+  coords <- strsplit(coords_str, " ")[[1]]
+  return(as.numeric(coords))
+}
+
+# Apply the function to each element of the vector
+coords_matrix <- t(sapply(coordinates, extract_coords))
+
+# Create a data frame from the matrix
+coords_df <- data.frame(lon = coords_matrix[,1], lat = coords_matrix[,2])
+
+# Print the first few rows of the data frame
+head(coords_df)
+
+# Print the structure of the data frame
+str(coords_df)
+
+# Convert the dataframe to an sf object
+points_sf <- st_as_sf(coords_df, coords = c("lon", "lat"), crs = 4326)
+
+# Load Illinois state boundaries
+usa <- st_as_sf(rnaturalearth::ne_states(country = "United States of America"))
+illinois <- usa[usa$name == "Illinois", ]
+
+# Plot the state of Illinois with the points overlayed
+ggplot() +
+  geom_sf(data = illinois, fill = "lightgray") +
+  geom_sf(data = points_sf, color = "red", size = 1) +
+  ggtitle("Air Pollution Permits Locations in Illinois") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  theme_minimal()
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
