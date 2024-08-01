@@ -44,7 +44,7 @@ folder_path <- "/Users/ivanzamorano/Desktop/DPSS-Capstone-Project/Data"  # use y
 setwd(folder_path) # passing the object into the function
 ```
 
-## Reading the files
+## Reading the provided files
 
 
 ```{r Chunk_2}
