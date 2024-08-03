@@ -14,25 +14,21 @@ knitr::opts_chunk$set(echo = TRUE)
 First we will take a look at the data provided 
 
 
-## Libraries and setting working directory
+## Libraries and packages
 
 ```{r Chunk_1}
-install.packages(c("Rcpp", "rgdal", "rgeos", "proj4"))
-
+# Remove pacakges
 remove.packages("sf")
+
+# Install packages 
+install.packages(c("Rcpp", "rgdal", "rgeos", "proj4"))
 install.packages("sf", dependencies = TRUE)
 install.packages("rnaturalearth")
 install.packages("devtools")
-devtools::install_github("ropensci/rnaturalearthhires")
-# Install necessary packages
 install.packages(c("sf", "ggplot2", "rnaturalearth", "devtools"))
 
-# Load the devtools package
+# Load libraries
 library(devtools)
-
-# Install rnaturalearthhires from GitHub
-devtools::install_github("ropensci/rnaturalearthhires")
-
 # Load the packages
 library(sf)
 library(ggplot2)
@@ -40,14 +36,27 @@ library(rnaturalearth)
 library(rnaturalearthhires)
 library(tidyverse)
 library(ggplot2)
+
+# Install rnaturalearthhires from GitHub
+devtools::install_github("ropensci/rnaturalearthhires")
+
+```
+## Setting working directory
+
+```{r Chunk_2}
+
+
 folder_path <- "/Users/ivanzamorano/Desktop/DPSS-Capstone-Project/Data"  # use your own path here
 setwd(folder_path) # passing the object into the function
+
 ```
 
 ## Reading the provided files
 
 
-```{r Chunk_2}
+```{r Chunk_3}
+folder_path <- "/Users/ivanzamorano/Desktop/DPSS-Capstone-Project/Data"  # use your own path here
+setwd(folder_path) # passing the object into the function
 permits <- read_csv("CDPH_Environmental_Permits.csv")
 census <- read_csv("Chicago_Census_2022_acs.csv") 
 green_spaces<- read_csv("Green_Spaces_CDP.csv") #Coordinate
